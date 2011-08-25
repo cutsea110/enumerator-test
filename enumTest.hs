@@ -11,10 +11,11 @@ import Data.List (genericSplitAt)
 listFeeder :: (Monad m) => [a] -> Enumerator a m b
 listFeeder = enumList 1
 
-listFeederIO :: [a] -> Enumerator a IO b
-listFeederIO xs (Continue k) | not (null xs) =
+listFeederIO :: (Show a) => [a] -> Enumerator a IO b
+listFeederIO xs (Continue k) | not (null xs) = do
   let (s1, s2) = genericSplitAt 1 xs
-  in k (Chunks s1) >>== listFeederIO s2
+  liftIO $ putStr $ show s1 ++ " => "
+  k (Chunks s1) >>== listFeederIO s2
 listFeederIO _ step = returnI step
 
 listFeederStateIO :: (Show a, Show s) => [a] -> Enumerator a (StateT s IO) ()
