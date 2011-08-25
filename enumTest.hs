@@ -8,16 +8,14 @@ import Data.Enumerator hiding (head)
 import qualified Data.Enumerator.List as EL
 import Data.List (genericSplitAt)
 
-listFeeder :: (Monad m) => Integer -> Enumerator Integer m b
-listFeeder n = enumList 1 [1..n]
+listFeeder :: (Monad m) => [a] -> Enumerator a m b
+listFeeder = enumList 1
 
 listFeederIO :: [a] -> Enumerator a IO b
 listFeederIO xs (Continue k) | not (null xs) =
   let (s1, s2) = genericSplitAt 1 xs
   in k (Chunks s1) >>== listFeederIO s2
 listFeederIO _ step = returnI step
-
-    
 
 listFeederStateIO :: (Show a, Show s) => [a] -> Enumerator a (StateT s IO) ()
 listFeederStateIO xs (Continue k) | not (null xs) = do
@@ -59,3 +57,9 @@ instance MonadTrans (Iteratee el) where
   
 instance MonadIO m => MonadIO (Iteratee el m) where
   liftIO = lift . liftIO
+
+test1 = run_ $ listFeeder [1..10] $$ printer
+
+test2 = run_ $ listFeederIO [1..10] $$ printer
+
+test3 = runStateT (run_ $ listFeederStateIO [1..10] $$ printerState) 1
